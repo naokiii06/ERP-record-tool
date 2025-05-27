@@ -107,6 +107,7 @@
     <input type="number" placeholder="5分後" id="anx5" min="0" max="100">
     <input type="number" placeholder="10分後" id="anx10" min="0" max="100">
     <input type="number" placeholder="30分後" id="anx30" min="0" max="100">
+    <input type="number" placeholder="60分後" id="anx60" min="0" max="100">
 
     <h3>カウンター項目の入力</h3>
     <div id="counterContainer"></div>
@@ -190,7 +191,8 @@
           after: parseInt(document.getElementById("anxAfter").value),
           min5: parseInt(document.getElementById("anx5").value),
           min10: parseInt(document.getElementById("anx10").value),
-          min30: parseInt(document.getElementById("anx30").value)
+          min30: parseInt(document.getElementById("anx30").value),
+          min60: parseInt(document.getElementById("anx60").value)
         },
         feedback: document.getElementById("feedback").value,
         counters: []
@@ -217,7 +219,7 @@
       const records = tasks[currentTaskIndex].records;
       records.forEach((r, i) => {
         const anx = r.anxiety;
-        const score = `直前:${anx.before}, 直後:${anx.after}, 5分:${anx.min5}, 10分:${anx.min10}, 30分:${anx.min30}`;
+        const score = `直前:${anx.before}, 直後:${anx.after}, 5分:${anx.min5}, 10分:${anx.min10}, 30分:${anx.min30}, 60分:${anx.min60}`;
         const counterStr = (r.counters || []).map(c => `${c.name}:${c.value}`).join(", ");
         tbody.innerHTML += `
           <tr>
