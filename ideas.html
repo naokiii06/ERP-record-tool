@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -24,62 +23,70 @@
     <section class="mb-6">
       <h2 class="text-lg font-semibold mb-2">強迫タイプを選んでください</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('縁起恐怖・不完全恐怖')">縁起恐怖・不完全恐怖</button>
-        <button class="bg-gray-200 hover:bg-gray-300 rounded-xl p-3 shadow" onclick="filterCards('')">すべて閉じる</button>
+        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterType('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
+        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterType('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
+        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterType('縁起恐怖・不完全恐怖')">縁起恐怖・不完全恐怖</button>
       </div>
     </section>
 
-    <section id="card-container" class="space-y-6">
-      <!-- カードはfetchで動的に追加されます -->
-    </section>
+    <section id="ideasContainer" class="space-y-8"></section>
   </main>
 
   <script>
-    async function fetchData() {
+    async function fetchIdeas() {
       try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbzR_uiX-7qlSG_woqbjA_pQCqAtvxqAwDBV5FJ_Rfx_2ey9hiyG1a8sOPNsmOf79GC6aw/exec");
+        const res = await fetch("https://script.google.com/macros/s/AKfycbw-CjI96qYj97jir6dMIzKJnBOKRX_pE6rrxJHECCvcmH-yvGr3nVTMgnGIeznegwFdJw/exec");
         const data = await res.json();
-        const container = document.getElementById("card-container");
 
-        const types = [...new Set(data.map(row => row["タイプ"]))];
-
+        const types = [...new Set(data.map(item => item.type))];
+        window.ideaData = {};
         types.forEach(type => {
-          const section = document.createElement("div");
-          section.className = "bg-white rounded-2xl shadow p-4 " + type;
-          section.style.display = "none";
-          section.innerHTML = `
-            <h3 class="text-base font-semibold mb-2">${type}</h3>
-            <p class="font-semibold">課題：</p>
-            <ul class="list-disc list-inside mb-4">
-              ${data.filter(d => d.タイプ === type && d.分類 === "課題").map(d => `<li>${d.内容}</li>`).join("")}
-            </ul>
-            <p class="font-semibold">行わない行動：</p>
-            <ul class="list-disc list-inside mb-4">
-              ${data.filter(d => d.タイプ === type && d.分類 === "行わない行動").map(d => `<li>${d.内容}</li>`).join("")}
-            </ul>
-            <p class="font-semibold">工夫：</p>
-            <ul class="list-disc list-inside">
-              ${data.filter(d => d.タイプ === type && d.分類 === "工夫").map(d => `<li>${d.内容}</li>`).join("")}
-            </ul>
-          `;
-          container.appendChild(section);
+          window.ideaData[type] = {
+            tasks: data.filter(i => i.type === type && i.task).map(i => i.task),
+            avoids: data.filter(i => i.type === type && i.avoid).map(i => i.avoid),
+            ideas: data.filter(i => i.type === type && i.idea).map(i => i.idea),
+          };
         });
       } catch (error) {
-        document.getElementById("card-container").innerHTML = "<p class='text-red-600'>データの取得に失敗しました。</p>";
-        console.error("Fetch error:", error);
+        document.getElementById("ideasContainer").innerHTML = `<p class="text-red-600">データの取得に失敗しました。再読み込みしてください。</p>`;
+        console.error(error);
       }
     }
 
-    function filterCards(type) {
-      const cards = document.querySelectorAll('#card-container > div');
-      cards.forEach(card => {
-        card.style.display = type && card.classList.contains(type) ? 'block' : 'none';
-      });
+    function filterType(type) {
+      const container = document.getElementById("ideasContainer");
+      const group = window.ideaData[type];
+      if (!group) return;
+
+      container.innerHTML = `
+        <div class="bg-white rounded-2xl shadow p-6">
+          <h3 class="text-xl font-semibold mb-4">${type}</h3>
+
+          <div class="mb-4">
+            <p class="font-semibold">課題：</p>
+            <ul class="list-disc list-inside text-gray-700">
+              ${group.tasks.map(t => `<li>${t}</li>`).join("")}
+            </ul>
+          </div>
+
+          <div class="mb-4">
+            <p class="font-semibold">行わない行動：</p>
+            <ul class="list-disc list-inside text-gray-700">
+              ${group.avoids.map(a => `<li>${a}</li>`).join("")}
+            </ul>
+          </div>
+
+          <div>
+            <p class="font-semibold">工夫：</p>
+            <ul class="list-disc list-inside text-gray-700">
+              ${group.ideas.map(i => `<li>${i}</li>`).join("")}
+            </ul>
+          </div>
+        </div>
+      `;
     }
 
-    fetchData();
+    fetchIdeas();
   </script>
 </body>
 </html>
