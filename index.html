@@ -1,36 +1,56 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>ERP記録ツール</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
+      font-family: sans-serif;
       background-color: #fdf6ee;
+      color: #4a3f35;
+      padding: 2em;
+      font-size: 18px;
+    }
+    h1, h2 {
+      color: #3b312c;
+    }
+    .section {
+      background-color: #fffaf4;
+      border: 2px solid #e0d5c2;
+      border-radius: 10px;
+      padding: 2em;
+      margin-bottom: 2em;
+      max-width: 100%;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.08);
+    }
+    input, textarea, select, button {
+      font-size: 18px;
+      width: 100%;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      padding: 0.75em;
+      border: 2px solid #d5c9b4;
+      border-radius: 6px;
+      background-color: #fffdf9;
+      color: #3a2f26;
+    }
+    button {
+      background-color: #e7d5b9;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #d8c5a8;
     }
   </style>
 </head>
-<body class="bg-beige-50 font-sans text-gray-800">
-  <!-- ヘッダー -->
-  <header class="bg-beige-100 p-4 shadow">
-    <div class="max-w-screen-md mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-semibold">ERP記録ツール</h1>
-      <button onclick="showSection('record')" class="text-sm text-blue-700 underline">記録ツールへ</button>
-      <button onclick="showSection('idea')" class="text-sm text-blue-700 underline">アイデア一覧へ</button>
-    </div>
-  </header>
-
-  <!-- 記録ツール画面 -->
-  <main id="recordSection" class="max-w-screen-md mx-auto px-4 py-6">
-    <h1>ERP記録ツール</h1>
+<body>
+  <h1>ERP記録ツール</h1>
 
   <div class="section">
     <h2>課題を選ぶ</h2>
-    <select id="taskSelector">
-      <option value="">--- 課題を選択 ---</option>
-    </select>
-    <button onclick="showTaskForm()">＋ 新しい課題を作成</button>
     <button onclick="window.location.href='ideas.html'"
             style="background-color: #e7d5b9;
                    border: none;
@@ -40,62 +60,16 @@
                    font-size: 16px;
                    color: #4a3f35;
                    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
-                   margin-top: 1em;">
+                   margin-bottom: 1em;">
       アイデアを見る
     </button>
+    <select id="taskSelector">
+      <option value="">--- 課題を選択 ---</option>
+    </select>
+    <button onclick="showTaskForm()">＋ 新しい課題を作成</button>
   </div>
-  </main>
 
-  <!-- アイデア一覧画面 -->
-  <main id="ideaSection" class="max-w-screen-md mx-auto px-4 py-6 hidden">
-    <section class="mb-6">
-      <h2 class="text-lg font-semibold mb-2">強迫タイプを選んでください</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <button class="bg-beige-200 hover:bg-beige-300 rounded-xl p-3 shadow" onclick="filterCards('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
-        <button class="bg-beige-200 hover:bg-beige-300 rounded-xl p-3 shadow" onclick="filterCards('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
-        <button class="bg-beige-200 hover:bg-beige-300 rounded-xl p-3 shadow" onclick="filterCards('縁起強迫・不完全恐怖')">縁起強迫・不完全恐怖</button>
-      </div>
-    </section>
-    <section id="card-container" class="space-y-4">
-    </section>
-  </main>
+  <!-- 以下に記録フォームなどを追加（短縮） -->
 
-  <script>
-    function showSection(section) {
-      document.getElementById("recordSection").classList.add("hidden");
-      document.getElementById("ideaSection").classList.add("hidden");
-      if (section === 'record') document.getElementById("recordSection").classList.remove("hidden");
-      if (section === 'idea') document.getElementById("ideaSection").classList.remove("hidden");
-    }
-
-    async function loadIdeas() {
-      const res = await fetch("https://script.google.com/macros/s/AKfycbzR_uiX-7qlSG_woqbjA_pQCqAtvxqAwDBV5FJ_Rfx_2ey9hiyG1a8sOPNsmOf79GC6aw/exec");
-      const ideas = await res.json();
-      const container = document.getElementById("card-container");
-      container.innerHTML = "";
-      ideas.forEach(item => {
-        const card = document.createElement("div");
-        card.className = `card ${item.type} bg-white rounded-2xl shadow p-4`;
-        card.innerHTML = `
-          <h3 class="text-base font-semibold">課題：${item.task}</h3>
-          <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-sm text-blue-600 underline">詳細を表示</button>
-          <div class="details hidden mt-2 text-sm">
-            <p><strong>行わない行動：</strong>${item.avoid}</p>
-            <p><strong>工夫：</strong>${item.idea}</p>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function filterCards(type) {
-      const cards = document.querySelectorAll('.card');
-      cards.forEach(card => {
-        card.style.display = card.classList.contains(type) ? 'block' : 'none';
-      });
-    }
-
-    window.onload = loadIdeas;
-  </script>
 </body>
 </html>
