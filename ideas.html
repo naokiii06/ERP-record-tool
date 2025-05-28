@@ -23,70 +23,71 @@
     <section class="mb-6">
       <h2 class="text-lg font-semibold mb-2">強迫タイプを選んでください</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterType('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterType('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterType('縁起恐怖・不完全恐怖')">縁起恐怖・不完全恐怖</button>
+        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
+        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
+        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('縁起恐怖・不完全恐怖')">縁起恐怖・不完全恐怖</button>
       </div>
     </section>
 
-    <section id="ideasContainer" class="space-y-8"></section>
+    <section id="card-container" class="space-y-6">
+      <p>読み込み中...</p>
+    </section>
   </main>
 
   <script>
-    async function fetchIdeas() {
-      try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbw-CjI96qYj97jir6dMIzKJnBOKRX_pE6rrxJHECCvcmH-yvGr3nVTMgnGIeznegwFdJw/exec");
-        const data = await res.json();
+    const container = document.getElementById("card-container");
+    let allData = [];
 
-        const types = [...new Set(data.map(item => item.type))];
-        window.ideaData = {};
-        types.forEach(type => {
-          window.ideaData[type] = {
-            tasks: data.filter(i => i.type === type && i.task).map(i => i.task),
-            avoids: data.filter(i => i.type === type && i.avoid).map(i => i.avoid),
-            ideas: data.filter(i => i.type === type && i.idea).map(i => i.idea),
-          };
+    fetch("https://script.google.com/macros/s/AKfycbw-CjI96qYj97jir6dMIzKJnBOKRX_pE6rrxJHECCvcmH-yvGr3nVTMgnGIeznegwFdJw/exec")
+      .then(res => res.json())
+      .then(data => {
+        allData = data;
+        container.innerHTML = "";
+        const types = [...new Set(data.map(d => d.type))];
+        types.forEach(type => renderTypeSection(type));
+      });
+
+    function renderTypeSection(type) {
+      const section = document.createElement("div");
+      section.className = "bg-white rounded-2xl shadow p-4 hidden";
+      section.setAttribute("data-type", type);
+
+      const title = document.createElement("h3");
+      title.className = "text-base font-semibold mb-2";
+      title.textContent = type;
+      section.appendChild(title);
+
+      const categories = { 課題: [], 行わない行動: [], 工夫: [] };
+      allData.filter(d => d.type === type).forEach(d => {
+        if (d.task) categories["課題"].push(d.task);
+        if (d.avoid) categories["行わない行動"].push(d.avoid);
+        if (d.idea) categories["工夫"].push(d.idea);
+      });
+
+      Object.entries(categories).forEach(([label, items]) => {
+        const p = document.createElement("p");
+        p.className = "font-semibold";
+        p.textContent = label + "：";
+        section.appendChild(p);
+
+        const ul = document.createElement("ul");
+        ul.className = "list-disc list-inside mb-4";
+        items.forEach(text => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          ul.appendChild(li);
         });
-      } catch (error) {
-        document.getElementById("ideasContainer").innerHTML = `<p class="text-red-600">データの取得に失敗しました。再読み込みしてください。</p>`;
-        console.error(error);
-      }
+        section.appendChild(ul);
+      });
+
+      container.appendChild(section);
     }
 
-    function filterType(type) {
-      const container = document.getElementById("ideasContainer");
-      const group = window.ideaData[type];
-      if (!group) return;
-
-      container.innerHTML = `
-        <div class="bg-white rounded-2xl shadow p-6">
-          <h3 class="text-xl font-semibold mb-4">${type}</h3>
-
-          <div class="mb-4">
-            <p class="font-semibold">課題：</p>
-            <ul class="list-disc list-inside text-gray-700">
-              ${group.tasks.map(t => `<li>${t}</li>`).join("")}
-            </ul>
-          </div>
-
-          <div class="mb-4">
-            <p class="font-semibold">行わない行動：</p>
-            <ul class="list-disc list-inside text-gray-700">
-              ${group.avoids.map(a => `<li>${a}</li>`).join("")}
-            </ul>
-          </div>
-
-          <div>
-            <p class="font-semibold">工夫：</p>
-            <ul class="list-disc list-inside text-gray-700">
-              ${group.ideas.map(i => `<li>${i}</li>`).join("")}
-            </ul>
-          </div>
-        </div>
-      `;
+    function filterCards(type) {
+      document.querySelectorAll('[data-type]').forEach(el => {
+        el.style.display = el.getAttribute("data-type") === type ? "block" : "none";
+      });
     }
-
-    fetchIdeas();
   </script>
 </body>
 </html>
