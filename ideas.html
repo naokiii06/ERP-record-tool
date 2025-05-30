@@ -23,70 +23,56 @@
     <section class="mb-6">
       <h2 class="text-lg font-semibold mb-2">強迫タイプを選んでください</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
-        <button class="bg-yellow-100 hover:bg-yellow-200 rounded-xl p-3 shadow" onclick="filterCards('縁起恐怖・不完全恐怖')">縁起恐怖・不完全恐怖</button>
+        <button class="bg-beige-200 hover:bg-beige-300 rounded-xl p-3 shadow" onclick="filterCards('加害恐怖・確認強迫')">加害恐怖・確認強迫</button>
+        <button class="bg-beige-200 hover:bg-beige-300 rounded-xl p-3 shadow" onclick="filterCards('不潔恐怖・洗浄強迫')">不潔恐怖・洗浄強迫</button>
+        <button class="bg-beige-200 hover:bg-beige-300 rounded-xl p-3 shadow" onclick="filterCards('縁起強迫・不完全恐怖')">縁起強迫・不完全恐怖</button>
       </div>
     </section>
 
-    <section id="card-container" class="space-y-6">
-      <p>読み込み中...</p>
-    </section>
+    <section id="card-container" class="space-y-6"></section>
   </main>
 
   <script>
-    const container = document.getElementById("card-container");
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbx5GRyDtouDf1mEOBKJhY3LqWrfTuTWKguwvcdNzroysRtW8B3Tu8MjsRasbogwEehh/exec";
     let allData = [];
 
-    fetch("https://script.google.com/macros/s/AKfycbw-CjI96qYj97jir6dMIzKJnBOKRX_pE6rrxJHECCvcmH-yvGr3nVTMgnGIeznegwFdJw/exec")
-      .then(res => res.json())
+    fetch(SHEET_URL)
+      .then(response => response.json())
       .then(data => {
         allData = data;
-        container.innerHTML = "";
-        const types = [...new Set(data.map(d => d.type))];
-        types.forEach(type => renderTypeSection(type));
+        displayCards("不潔恐怖・洗浄強迫"); // 初期表示
+      })
+      .catch(err => {
+        document.getElementById("card-container").innerHTML =
+          '<div class="text-red-500">データを取得できませんでした。</div>';
+        console.error(err);
       });
-
-    function renderTypeSection(type) {
-      const section = document.createElement("div");
-      section.className = "bg-white rounded-2xl shadow p-4 hidden";
-      section.setAttribute("data-type", type);
-
-      const title = document.createElement("h3");
-      title.className = "text-base font-semibold mb-2";
-      title.textContent = type;
-      section.appendChild(title);
-
-      const categories = { 課題: [], 行わない行動: [], 工夫: [] };
-      allData.filter(d => d.type === type).forEach(d => {
-        if (d.task) categories["課題"].push(d.task);
-        if (d.avoid) categories["行わない行動"].push(d.avoid);
-        if (d.idea) categories["工夫"].push(d.idea);
-      });
-
-      Object.entries(categories).forEach(([label, items]) => {
-        const p = document.createElement("p");
-        p.className = "font-semibold";
-        p.textContent = label + "：";
-        section.appendChild(p);
-
-        const ul = document.createElement("ul");
-        ul.className = "list-disc list-inside mb-4";
-        items.forEach(text => {
-          const li = document.createElement("li");
-          li.textContent = text;
-          ul.appendChild(li);
-        });
-        section.appendChild(ul);
-      });
-
-      container.appendChild(section);
-    }
 
     function filterCards(type) {
-      document.querySelectorAll('[data-type]').forEach(el => {
-        el.style.display = el.getAttribute("data-type") === type ? "block" : "none";
-      });
+      displayCards(type);
+    }
+
+    function displayCards(type) {
+      const container = document.getElementById("card-container");
+      container.innerHTML = "";
+
+      const tasks = allData.filter(i => i.type === type && i.task).map(i => i.task);
+      const avoids = allData.filter(i => i.type === type && i.avoid).map(i => i.avoid);
+      const ideas = allData.filter(i => i.type === type && i.idea).map(i => i.idea);
+
+      const section = document.createElement("div");
+      section.className = "bg-white rounded-2xl shadow p-4";
+      section.innerHTML = `
+        <h3 class="text-base font-semibold mb-2">${type}</h3>
+        <p class="font-semibold">課題：</p>
+        <ul class="list-disc list-inside mb-4">${[...new Set(tasks)].map(t => `<li>${t}</li>`).join('')}</ul>
+        <p class="font-semibold">行わない行動：</p>
+        <ul class="list-disc list-inside mb-4">${[...new Set(avoids)].map(a => `<li>${a}</li>`).join('')}</ul>
+        <p class="font-semibold">工夫：</p>
+        <ul class="list-disc list-inside">${[...new Set(ideas)].map(i => `<li>${i}</li>`).join('')}</ul>
+      `;
+
+      container.appendChild(section);
     }
   </script>
 </body>
